@@ -1,12 +1,15 @@
 {
   "name": "echo-lab",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "desktop:dev": "electron .",
+    "desktop:win": "electron-builder --win nsis --x64",
+    "desktop:dir": "electron-builder --win dir --x64"
   },
   "dependencies": {
     "next": "^15.5.0",
@@ -17,6 +20,40 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "electron": "^39.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "main": "desktop/main.cjs",
+  "build": {
+    "appId": "com.echolab.studio",
+    "productName": "EchoLab Studio",
+    "asar": true,
+    "files": [
+      "desktop/**/*",
+      "out/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "EchoLab-Setup-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }
