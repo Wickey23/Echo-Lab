@@ -37,3 +37,19 @@ This is a working MVP, not yet a latency-calibrated DAW. USB monitoring/driver s
 ## Privacy
 
 This version does not upload recorded audio. Browser-local IndexedDB holds the audio, while localStorage holds the arrangement. No authentication or server-side audio storage is enabled.
+
+## Windows desktop build (v0.4)
+
+The Windows desktop app uses a packaged, **offline** version of EchoLab Studio and a secure Electron window. It includes a three-step Spark GO setup assistant with official driver links, USB input discovery, and a live input meter.
+
+```sh
+npm install
+npm run build
+npm run desktop:dev
+# Windows installer (.exe), on a Windows build machine:
+npm run desktop:win
+```
+
+The GitHub Actions **Windows Desktop Package** workflow builds an unsigned installer on Windows and uploads it as a workflow artifact when successful. It is not published as a signed download or stable release.
+
+The studio now attempts uncompressed mono WAV capture through AudioWorklet, with MediaRecorder as a compatibility fallback. This is not ASIO-native capture, does not yet include calibrated overdub compensation, and has not been verified using a physical Spark GO. Keep exported backups. See [desktop notes](docs/DESKTOP.md) for setup and validation.
