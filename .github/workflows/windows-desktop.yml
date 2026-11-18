@@ -1,0 +1,43 @@
+name: Windows Desktop Package
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'desktop/**'
+      - 'app/**'
+      - 'package.json'
+      - 'next.config.ts'
+      - '.github/workflows/windows-desktop.yml'
+permissions:
+  contents: read
+jobs:
+  package-windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Install packages
+        run: npm install --no-audit --no-fund
+      - name: Verify types
+        run: npm run lint
+      - name: Export static studio
+        run: npm run build
+      - name: Package unsigned Windows installer
+        run: npm run desktop:win
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Publish installer artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: echolab-windows-unsigned
+          path: dist/*.exe
+          if-no-files-found: error
+          retention-days: 14
