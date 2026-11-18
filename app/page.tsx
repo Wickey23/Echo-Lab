@@ -86,6 +86,9 @@ export default function Studio() {
   const [project, setProject] = useState<Project | null>(null);
   const [screen, setScreen] = useState<'home' | 'studio'>('home');
   const [trackPicker, setTrackPicker] = useState(false);
+  const [zoom, setZoom] = useState(100);
+  const [snap, setSnap] = useState(true);
+  const [metronome, setMetronome] = useState(false);
   const [panel, setPanel] = useState<'none' | 'drums' | 'mixer' | 'loops' | 'input' | 'fx'>('none');
   const [selected, setSelected] = useState('');
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
@@ -103,6 +106,7 @@ export default function Studio() {
   const session = useRef<Session | null>(null);
   const runningSources = useRef<AudioBufferSourceNode[]>([]);
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
+  const clickNodes = useRef<AudioNode[]>([]);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const inputStream = useRef<MediaStream | null>(null);
   const recordStart = useRef(0);
@@ -150,6 +154,8 @@ export default function Studio() {
     tick.current = null;
     runningSources.current.forEach(s => { try { s.stop(); } catch { /* source already stopped */ } });
     runningSources.current = [];
+    clickNodes.current.forEach(n => { try { n.disconnect(); } catch {} });
+    clickNodes.current = [];
     session.current = null;
     setPlaying(false); setPlayhead(0);
   }, []);
@@ -171,6 +177,21 @@ export default function Studio() {
     }
   };
 
+  const scheduleClicks = (ctx: AudioContext, when:number, from:number, end:number, bpm:number) => {
+    if (!metronome) return;
+    const beatLength=60/bpm;
+    for(let beat=Math.ceil(from/beatLength); beat*beatLength<end; beat++){
+      const at=when+beat*beatLength-from;
+      if(at<ctx.currentTime)continue;
+      const osc=ctx.createOscillator(),gain=ctx.createGain();
+      osc.type='sine';osc.frequency.value=beat%4===0?1320:990;
+      gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(.12,at+.003);gain.gain.exponentialRampToValueAtTime(.0001,at+.055);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(at);osc.stop(at+.06);
+      clickNodes.current.push(gain);
+      osc.onended=()=>{gain.disconnect();osc.disconnect();clickNodes.current=clickNodes.current.filter(n=>n!==gain);};
+    }
+  };
   const startTransport = async () => {
     if (playing) { stopTransport(); return; }
     try {
@@ -178,11 +199,13 @@ export default function Studio() {
       const length = loopSeconds(p), when = ctx.currentTime + .045;
       session.current = { started: when, resume: 0, nextAt: when + length, length };
       schedule(ctx, when, 0, length);
+      scheduleClicks(ctx,when,0,length,p.bpm);
       setPlaying(true); setStatus('Loop playback');
       tick.current = setInterval(() => {
         const s = session.current, c = ctxRef.current; if (!s || !c) return;
         if (c.currentTime >= s.nextAt - .12) {
           schedule(c, s.nextAt, 0, s.length);
+          scheduleClicks(c,s.nextAt,0,s.length,p.bpm);
           s.nextAt += s.length;
         }
         setPlayhead(((c.currentTime - s.started) % s.length + s.length) % s.length);
@@ -333,14 +356,15 @@ export default function Studio() {
   const openPicker = () => {setTrackPicker(true);setPanel('none');};
   const activeTrack = project.tracks.find(t=>t.id===selected) || project.tracks[0];
   const length = loopSeconds(project), barWidth = 100 / project.bars;
-  return <div className="app-shell redesigned">
+  return <div className={"app-shell redesigned " + (screen==="studio"?"studio-mode":"home-mode")} >
     <aside className="sidebar">
       <div className="brand"><div className="brand-symbol">≋</div><div><strong>echo<span>lab</span></strong><small>MAKE SOMETHING REAL</small></div></div>
       <div className="nav-group"><div className="nav-heading">WORKSPACE</div><button className={'nav-item nav-button '+(screen==='home'?'active':'')} onClick={()=>setScreen('home')}><span>⌂</span> Home</button><button className={'nav-item nav-button '+(screen==='studio'?'active':'')} onClick={()=>setScreen('studio')}><span>◉</span> Studio</button><button className="nav-item nav-button" onClick={openPicker}><span>⊞</span> Add a track</button><div className="nav-heading nav-heading-tools">TOOLS</div><button className="nav-item nav-button" onClick={()=>{setScreen('studio');setPanel('drums')}}><span>▤</span> Drum machine</button><button className="nav-item nav-button" onClick={()=>{setScreen('studio');setPanel('mixer')}}><span>☷</span> Mixer</button><button className="nav-item nav-button" onClick={()=>{setScreen('studio');setPanel('loops')}}><span>∞</span> Looper</button></div>
-      <div className="sidebar-bottom"><div className="sidebar-divider" /><div className="feature-kicker">YOUR STUDIO, YOUR AUDIO</div><p>Recordings stay in this browser. Export your work to keep a backup.</p><div className="sidebar-version">ECHO LAB / EARLY ACCESS v0.1</div></div>
+      <div className="sidebar-bottom"><div className="sidebar-divider" /><div className="feature-kicker">YOUR STUDIO, YOUR AUDIO</div><p>Recordings stay in this browser. Export your work to keep a backup.</p><div className="sidebar-version">ECHO LAB / STUDIO v0.3</div></div>
     </aside>
     <div className="main-area">
       <header className="topbar">
+        {screen==='studio' && <button className="studio-back" onClick={()=>setScreen('home')} aria-label="Back to projects">‹ <span>Projects</span></button>}
         <div className="top-left"><span className="breadcrumb">EchoLab <span>/</span> {screen==='home'?'Create':'Studio'}</span><input aria-label="Project name" className="project-name" value={project.name} maxLength={60} onChange={e => update(p => ({ ...p, name: e.target.value }))}/><span className="saved-label">● Local autosave</span></div>
         <div className="top-actions"><button className="btn btn-ghost" onClick={() => void resetProject()}>New session</button><button className="btn btn-ghost" onClick={openPicker}>＋ New track</button><button className="btn btn-primary" disabled={busy} onClick={() => void exportWav()}>↓ Export WAV</button></div>
       </header>
@@ -350,20 +374,20 @@ export default function Studio() {
         <div className="create-section"><div className="section-head"><h2>Start with a sound</h2><span>Choose a track type</span></div><div className="creation-grid">{TRACK_TYPES.map(t=><button key={t.name} className="creation-card" onClick={()=>addTrackType(t.name)}><span className="creation-icon" style={{background:t.color+'25',color:t.color}}>{t.icon}</span><strong>{t.name}</strong><small>{t.sub}</small><span className="creation-plus">＋</span></button>)}</div></div>
         <div className="create-section"><div className="section-head"><h2>Creative tools</h2></div><div className="tool-launchers"><button onClick={()=>{setScreen('studio');setPanel('drums')}}>▤ <span>Drum machine</span><small>Make beats</small></button><button onClick={()=>{setScreen('studio');setPanel('mixer')}}>☷ <span>Mixer</span><small>Shape your levels</small></button><button onClick={()=>{setScreen('studio');setPanel('loops')}}>∞ <span>Loop station</span><small>Layer your guitar</small></button><button onClick={()=>{setScreen('studio');setPanel('input')}}>♮ <span>Spark GO</span><small>Connect USB audio</small></button></div></div>
       </main> : <div className="content">
-        <div className="headline"><div><div className="eyebrow">MULTITRACK STUDIO <span> / </span> YOUR SESSION</div><h1>Make something <i>real.</i></h1><p>Capture a riff. Layer a feeling. Build your sound.</p></div><div className="head-badge"><span className="pulse-dot" /> AUDIO ENGINE <strong>READY</strong></div></div>
+        <div className="studio-heading"><div><span className="studio-heading-kicker">PROJECT / AUDIO WORKSPACE</span><h1>{project.name || 'Untitled session'}<span> · Studio</span></h1></div><div className="studio-heading-actions"><button className="btn btn-secondary" onClick={()=>fileInput.current?.click()}>↥ Import</button><button className="btn btn-primary" onClick={openPicker}>＋ Add track</button></div></div>
         <section className="control-bar" aria-label="Transport controls">
-          <div className="transport"><button className="round-btn square-btn" title="Return to start" onClick={stopTransport}>■</button><button className="round-btn play-btn" aria-label={playing ? 'Stop playback' : 'Start playback'} onClick={() => void startTransport()}>{playing ? '■' : '▶'}</button><button className={'record-btn ' + (recording ? 'is-recording' : '')} title={recording ? 'Stop recording' : 'Record / overdub'} onClick={() => void startRecording()}>{recording ? '■ STOP' : '● REC'}</button></div>
+          <div className="transport"><button className="round-btn square-btn" title="Return to start" onClick={stopTransport}>|◀</button><button className="round-btn play-btn" aria-label={playing ? 'Stop playback' : 'Start playback'} onClick={() => void startTransport()}>{playing ? '■' : '▶'}</button><button className={'record-btn ' + (recording ? 'is-recording' : '')} title={recording ? 'Stop recording' : 'Record / overdub'} onClick={() => void startRecording()}>{recording ? '■ STOP' : '● REC'}</button></div>
           <div className="transport-divider" />
           <div className="time-display">{formatTime(playhead)} <span>/ {formatTime(length)}</span></div>
           <div className="transport-divider" />
           <div className="tempo-control"><label> TEMPO <input type="number" aria-label="Tempo in BPM" value={project.bpm} min={40} max={240} onChange={e => { if (playing) stopTransport(); update(p => ({ ...p, bpm: clamp(Number(e.target.value) || 90, 40, 240) })); }} /> <small>BPM</small></label></div>
           <div className="transport-divider hide-mobile" />
           <div className="bars-control"><label>LOOP LENGTH <select aria-label="Loop length in bars" value={project.bars} onChange={e => { if (playing) stopTransport(); update(p => ({ ...p, bars: Number(e.target.value) })); }}>{[1,2,4,8,16].map(n => <option key={n} value={n}>{n} bars</option>)}</select></label></div>
-          <span className="transport-spacer" /><div className="signature">4 / 4 <span>TIME</span></div>
+          <button className={'metro-toggle '+(metronome?'on':'')} aria-pressed={metronome} title="Metronome" onClick={()=>setMetronome(x=>!x)}>♩ <span>Click</span></button><span className="transport-spacer" /><div className="signature">4 / 4 <span>TIME</span></div>
         </section>
         <section className="studio-panel">
-          <div className="panel-heading"><div><span className="panel-icon">▥</span><strong>Arrangement</strong><small>{project.tracks.length} tracks · {fileCount} clips</small></div><button className="btn btn-secondary" onClick={openPicker}>＋ Add track</button></div>
-          <div className="arrangement">
+          <div className="panel-heading"><div><span className="panel-icon">▦</span><strong>Tracks</strong><small>{project.tracks.length} tracks · {fileCount} clips</small></div><div className="timeline-tools"><button className={snap?'tool-active':''} title="Snap clips to beat when moving" aria-pressed={snap} onClick={()=>setSnap(v=>!v)}>⊞ Snap {snap?'on':'off'}</button><button title="Zoom out timeline" onClick={()=>setZoom(v=>Math.max(80,v-20))}>−</button><span>{zoom}%</span><button title="Zoom in timeline" onClick={()=>setZoom(v=>Math.min(200,v+20))}>＋</button><button className="track-add" onClick={openPicker}>＋ Track</button></div></div>
+          <div className="arrangement-viewport"><div className="arrangement" style={{ minWidth: zoom > 100 ? Math.round(750*zoom/100)+'px' : undefined }}>
             <div className="track-label top-label"><span>TRACKS</span></div><div className="ruler">{Array.from({ length: project.bars }, (_, i) => <div className="ruler-bar" key={i} style={{ width: barWidth + '%' }}><span>{String(i + 1).padStart(2, '0')}</span></div>)}</div>
             {project.tracks.map((track, index) => <div className="track-row" key={track.id}>
               <div className={'track-info ' + (selected === track.id ? 'track-selected' : '')} onClick={() => setSelected(track.id)}>
@@ -371,11 +395,12 @@ export default function Studio() {
                 <div className="track-settings"><button className={track.muted ? 'toggle-on' : ''} title="Mute track" onClick={e => { e.stopPropagation(); update(p => ({ ...p, tracks: p.tracks.map(t => t.id === track.id ? { ...t, muted: !t.muted } : t) })); }}>M</button><button className={track.solo ? 'toggle-on' : ''} title="Solo track" onClick={e => { e.stopPropagation(); update(p => ({ ...p, tracks: p.tracks.map(t => t.id === track.id ? { ...t, solo: !t.solo } : t) })); }}>S</button><label title="Track volume">VOL <input type="range" min="0" max="1.5" step=".05" value={track.volume} onChange={e => update(p => ({ ...p, tracks: p.tracks.map(t => t.id === track.id ? { ...t, volume: Number(e.target.value) } : t) }))}/></label><button title="Remove empty track" disabled={project.tracks.length === 1 || project.clips.some(c => c.trackId === track.id)} onClick={e => { e.stopPropagation(); update(p => ({ ...p, tracks: p.tracks.filter(t => t.id !== track.id) })); if (selected === track.id) setSelected(project.tracks[0].id); }}>×</button></div>
               </div>
               <div className="lane" onClick={() => setSelected(track.id)} style={{ backgroundSize: barWidth + '% 100%' }}>
-                {project.clips.filter(c => c.trackId === track.id).map(clip => { const buffer = buffers.current.get(clip.id), width = clamp((buffer?.duration || 0) / length * 100, 1, 100 - clip.start / length * 100); return <div className="clip" key={clip.id} style={{ left: clip.start / length * 100 + '%', width: width + '%', borderColor: track.color + '90', backgroundColor: track.color + '19' }} title={clip.name}><div className="clip-caption"><span>{clip.name}</span><button title="Delete clip" onClick={e => { e.stopPropagation(); void deleteClip(clip.id); }}>×</button></div><Wave peaks={clip.peaks} color={track.color}/><div className="clip-move"><button title="Move clip one beat left" onClick={e => { e.stopPropagation(); update(p => ({ ...p, clips: p.clips.map(c => c.id === clip.id ? { ...c, start: Math.max(0, c.start - 60 / p.bpm) } : c) })); }}>←</button><button title="Move clip one beat right" onClick={e => { e.stopPropagation(); update(p => ({ ...p, clips: p.clips.map(c => c.id === clip.id ? { ...c, start: Math.min(loopSeconds(p) - .05, c.start + 60 / p.bpm) } : c) })); }}>→</button></div></div>; })}
+                {project.clips.filter(c => c.trackId === track.id).map(clip => { const buffer = buffers.current.get(clip.id), width = clamp((buffer?.duration || 0) / length * 100, 1, 100 - clip.start / length * 100); return <div className="clip" key={clip.id} style={{ left: clip.start / length * 100 + '%', width: width + '%', borderColor: track.color + '90', backgroundColor: track.color + '19' }} title={clip.name}><div className="clip-caption"><span>{clip.name}</span><button title="Delete clip" onClick={e => { e.stopPropagation(); void deleteClip(clip.id); }}>×</button></div><Wave peaks={clip.peaks} color={track.color}/><div className="clip-move"><button title="Move clip one beat left" onClick={e => { e.stopPropagation(); update(p => ({ ...p, clips: p.clips.map(c => c.id === clip.id ? { ...c, start: Math.max(0, c.start - (snap ? 60 / p.bpm : .1)) } : c) })); }}>←</button><button title="Move clip one beat right" onClick={e => { e.stopPropagation(); update(p => ({ ...p, clips: p.clips.map(c => c.id === clip.id ? { ...c, start: Math.min(loopSeconds(p) - .05, c.start + (snap ? 60 / p.bpm : .1)) } : c) })); }}>→</button></div></div>; })}
                 {playing && <div className="playhead" style={{ left: playhead / length * 100 + '%' }} />}
                 {!project.clips.some(c => c.trackId === track.id) && <span className="empty-lane">{index === 0 ? 'Press REC to capture your first sound' : 'Empty audio track'}</span>}
               </div>
             </div>)}
+          </div>
           </div>
           <div className="arrangement-footer"><span><span className="tiny-dot" /> {status}</span><span>1 bar = 4 beats · Loop repeats continuously</span></div>
         </section>
@@ -385,7 +410,7 @@ export default function Studio() {
         {panel==='loops' && <div className="drawer-panel"><div className="drawer-title"><strong>Live loop station</strong><button onClick={()=>setPanel('none')}>✕ Close</button></div><div className="loop-workspace"><div className="loop-circle"><span>{project.bars}</span><small>BARS</small></div><div><h3>Build your layers</h3><p>Choose an audio track, hit Play, then Record. Each new overdub creates another layer.</p><div className="loop-actions"><button className="btn btn-secondary" onClick={()=>void startTransport()}>{playing?'■ Stop loop':'▶ Play loop'}</button><button className="btn btn-primary" onClick={()=>void startRecording()}>{recording?'■ Stop recording':'● Record layer'}</button></div><small>Browser audio latency is not yet compensated. Use headphones when overdubbing.</small></div></div></div>}
         {panel==='fx' && <div className="drawer-panel"><div className="drawer-title"><strong>Effects & instruments</strong><button onClick={()=>setPanel('none')}>✕ Close</button></div><div className="feature-placeholder"><span>✧</span><h3>Production effects are on the roadmap</h3><p>Per-track EQ, compression, delay, reverb, pitch tools, sampler and MIDI instruments will be added as functioning processors. These controls are not simulated as working effects.</p><button className="btn btn-secondary" onClick={()=>setPanel('mixer')}>Open working mixer</button></div></div>}
         {panel==='input' && <div className="drawer-panel"><div className="drawer-title"><strong>Audio device settings</strong><button onClick={()=>setPanel('none')}>✕ Close</button></div><p className="drawer-description">Choose your USB interface, including Spark GO when your computer and browser recognize it.</p></div>}
-        <div className="bottom-grid">
+        <div className={"bottom-grid "+(panel==='input'?'input-visible':'')}>
           <section className="utility-card"><div className="utility-top"><div className="card-symbol">⌁</div><div><div className="card-eyebrow">INPUT & RECORDING</div><h2>Audio input</h2></div></div><p>Connect your Spark GO via USB-C, or use any audio interface or microphone exposed to your browser.</p><div className="device-select"><label htmlFor="input-device">INPUT DEVICE</label><select id="input-device" value={deviceId} onChange={e => setDeviceId(e.target.value)}><option value="">Default microphone / interface</option>{devices.map(d => <option key={d.deviceId} value={d.deviceId}>{d.label || 'Audio input ' + d.deviceId.slice(0, 5)}</option>)}</select></div><button className="btn btn-outline wide" onClick={() => void refreshDevices(true)}>◎ Detect / enable inputs</button><div className="card-note">USB interface recording works in supported desktop browsers. Select your Spark GO when it appears.</div></section>
           <section className="utility-card"><div className="utility-top"><div className="card-symbol purple">◌</div><div><div className="card-eyebrow">LIVE PERFORMANCE</div><h2>Loop station</h2></div></div><p>Set the tempo and loop length above. Hit play, record into a track, then overdub to stack up parts.</p><div className="loop-status"><span>LOOP REGION</span><strong>{project.bars} bars <em>·</em> {length.toFixed(1)}s</strong></div><div className="loop-status"><span>SELECTED TRACK</span><strong>{project.tracks.find(t => t.id === selected)?.name || 'Guitar 1'}</strong></div><div className="card-note warning">Early access: overdub alignment is approximate. Spark GO latency calibration is planned for the desktop engine.</div></section>
         </div>
