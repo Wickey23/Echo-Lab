@@ -120,3 +120,26 @@
 .studio-mode .panel-heading .panel-icon{display:none}
 .timeline-tools button:first-child{display:none}
 }
+
+
+/* Spark GO setup wizard */
+.audio-wizard{max-width:880px;margin:0 auto;color:#dce8e6}
+.wizard-header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.wizard-header h3{font:600 23px 'Outfit',sans-serif;margin:5px 0}
+.wizard-header p,.wizard-content p{font-size:13px;color:#9eb1bd;line-height:1.65;margin:8px 0 13px}
+.wizard-step{font-size:12px;color:#91bcae;font-weight:800;white-space:nowrap;margin-top:9px}
+.wizard-progress{display:flex;gap:7px;margin:19px 0 23px}
+.wizard-progress button{flex:1;height:5px;border:0;border-radius:8px;background:#35424d}
+.wizard-progress button.current{background:#8ce5c4}
+.wizard-progress button.complete{background:#4c9c82}
+.wizard-content{background:#1b2630;border:1px solid #33424b;border-radius:12px;padding:22px}
+.wizard-content h4{font:600 17px 'Outfit',sans-serif;margin:0 0 11px}
+.wizard-buttons{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.wizard-device{display:flex;gap:10px;align-items:center}
+.wizard-device select{flex:1;min-width:0;border:1px solid #475760;border-radius:7px;color:#e7f0ef;background:#202d37;padding:10px 12px}
+.wizard-good{color:#a0eaca!important}.wizard-note{color:#c5ac8c!important}
+.wizard-meter{height:22px;background:#0f171d;border:1px solid #3d4c55;border-radius:7px;overflow:hidden;margin-top:18px}
+.wizard-meter>span{display:block;height:100%;background:linear-gradient(90deg,#58b599,#8ce8c5 70%,#ffbc75 90%,#ef6969);transition:width .07s}
+.wizard-meter-label{display:flex;justify-content:space-between;gap:10px;color:#90a7b1;font-size:10px;font-weight:800;letter-spacing:1px;margin-top:8px}
+.wizard-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+@media(max-width:600px){.wizard-content{padding:14px}.wizard-device{flex-direction:column;align-items:stretch}.wizard-header h3{font-size:19px}.wizard-buttons .btn{flex:1}}
