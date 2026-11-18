@@ -11,3 +11,112 @@
 @media(max-width:1100px){.creation-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.tool-launchers{grid-template-columns:repeat(2,minmax(0,1fr))}.mixer-channel{flex-wrap:wrap}.mixer-channel label{min-width:150px}}
 @media(max-width:860px){.redesigned .topbar{display:none}.create-page{padding:32px 17px 100px}.create-heading{margin-bottom:32px}.create-heading h1{font-size:34px}.mobile-dock{position:fixed;bottom:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-around;background:#10151beF;border-top:1px solid #2a3540;height:72px;padding:5px 4px max(5px,env(safe-area-inset-bottom));backdrop-filter:blur(12px)}.mobile-dock button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:48px;border:0;background:transparent;color:#8d9fac;font-size:10px;font-weight:700}.mobile-dock button span{font-size:23px}.mobile-dock button.selected{color:#a3eed0}.mobile-dock button.mobile-add{display:grid;place-items:center;background:#9debd0;color:#14372b;border-radius:50%;font-size:30px;width:53px;height:53px;margin-top:-25px;box-shadow:0 4px 20px #67c49a3d}.redesigned .content{padding-bottom:105px}.picker-backdrop{align-items:flex-end;padding:0}.picker-sheet{border-radius:23px 23px 0 0;max-height:88vh;padding:13px 20px 35px;width:100%;border-bottom:0}.sheet-handle{display:block;background:#38444d;border-radius:4px;width:42px;height:5px;margin:0 auto 23px}.sheet-options{grid-template-columns:1fr;gap:4px}.sheet-options>button{background:transparent;border-color:transparent;padding:10px 7px}.sheet-options>button:hover{background:#273540}.sheet-icon{width:51px;height:51px}.sheet-options strong{font-size:15px}.sheet-options small{font-size:11px}.sheet-header h2{font-size:26px}.drawer-panel{padding:15px}.mixer-channel strong{width:100px}}
 @media(max-width:500px){.creation-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.creation-card{padding:13px;min-height:156px}.creation-icon{width:40px;height:40px}.creation-card strong{font-size:14px}.creation-card small{font-size:10px}.tool-launchers{gap:9px}.tool-launchers button{padding:15px}.recent-session{padding:12px;gap:12px}.recent-art{height:58px;width:58px}.recent-arrow{font-size:10px}.create-start{font-size:11px;padding:10px}.loop-workspace{flex-direction:column;align-items:flex-start;gap:22px}.loop-circle{width:100px;height:100px}.loop-circle span{font-size:30px}.drum-head{flex-wrap:wrap}.drum-actions .btn{flex:1}.mixer-channel label{min-width:130px}}
+
+
+/* v0.3 – DAW-focused workstation layout */
+.redesigned.studio-mode .sidebar{display:none}
+.studio-mode .main-area{width:100%;display:flex;flex-direction:column;min-height:100vh}
+.studio-mode .topbar{height:55px;min-height:55px;padding:0 17px;background:#11151b;border-bottom:1px solid #333b46;gap:19px;justify-content:flex-start}
+.studio-mode .top-left{gap:13px;flex:1}.studio-mode .project-name{font-size:13px;max-width:280px}
+.studio-mode .breadcrumb{display:none}.studio-mode .saved-label{font-size:10px}
+.studio-back{background:#222c35;border:1px solid #35414b;border-radius:6px;color:#d3e1e5;padding:6px 11px;display:flex;gap:8px;align-items:center;font-size:13px;font-weight:700;white-space:nowrap}
+.studio-back:hover{background:#30414a}.studio-back:first-letter{font-size:25px}
+.studio-mode .top-actions .btn{font-size:11px;padding:8px 12px}
+.studio-mode .content{max-width:none;width:100%;padding:0;display:flex;flex-direction:column;flex:1}
+.studio-heading{background:#171c25;border-bottom:1px solid #29323d;padding:15px 22px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.studio-heading-kicker{font-size:9px;letter-spacing:1.55px;color:#8eaaa2;font-weight:800}
+.studio-heading h1{font:600 18px/1.25 'Outfit',sans-serif;margin:3px 0 0;letter-spacing:-.3px}
+.studio-heading h1 span{color:#70848f;font-size:13px;font-weight:400}
+.studio-heading-actions{display:flex;gap:8px}
+.studio-heading-actions .btn{padding:8px 12px}
+.studio-mode .control-bar{border:0;border-bottom:1px solid #36414a;border-radius:0;margin:0;min-height:71px;background:#1b2029;justify-content:center;padding:11px 22px;gap:22px}
+.studio-mode .round-btn{background:#29333d}.studio-mode .play-btn{width:44px;height:44px;background:#a8ead2;color:#142d24}
+.studio-mode .record-btn{border-radius:50%;width:39px;height:39px;min-width:39px;padding:0;color:#ff6c75;background:#382129;border:2px solid #bd5b5f;font-size:0}
+.studio-mode .record-btn:before{content:"";display:block;border-radius:50%;width:16px;height:16px;background:#ee555b}
+.studio-mode .record-btn.is-recording:before{border-radius:4px;background:#fff}
+.studio-mode .time-display{font-size:25px;letter-spacing:0;font-variant-numeric:tabular-nums}
+.studio-mode .time-display span{font-size:11px}
+.studio-mode .tempo-control label,.studio-mode .bars-control label{display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+.studio-mode .tempo-control input{text-align:left;font-size:19px;width:52px}
+.studio-mode .tempo-control small{margin-left:4px}
+.studio-mode .signature{font-size:14px}
+.metro-toggle{border:1px solid #36454f;background:#28323b;color:#abbfc9;padding:9px 13px;border-radius:7px;font-size:16px;white-space:nowrap}
+.metro-toggle span{font-size:11px;margin-left:3px}
+.metro-toggle.on{background:#244138;color:#a8ebd2;border-color:#5d9c84}
+.studio-mode .studio-panel{flex:1;min-height:400px;background:#151a23;border:0;border-radius:0;display:flex;flex-direction:column;overflow:visible}
+.studio-mode .panel-heading{background:#131921;border-bottom:1px solid #313944;height:47px;min-height:47px;padding:0 18px}
+.studio-mode .panel-heading strong{font-size:13px}
+.studio-mode .panel-heading small{font-size:10px}
+.studio-mode .panel-icon{width:23px;height:23px}
+.timeline-tools{display:flex;align-items:center;gap:5px}
+.timeline-tools button{border:1px solid #39444e;border-radius:5px;background:#222c35;color:#a6b8c5;padding:5px 8px;font-size:11px;font-weight:700}
+.timeline-tools button:hover,.timeline-tools button.tool-active{background:#29433b;border-color:#558a78;color:#bcf1db}
+.timeline-tools span{font:600 10px 'DM Sans',sans-serif;color:#8498a6;min-width:35px;text-align:center}
+.timeline-tools button.track-add{background:#a5ebd2;border-color:#a5ebd2;color:#19362a;margin-left:10px}
+.studio-mode .arrangement-viewport{width:100%;overflow:auto;min-height:320px;flex:1;background:#151b24}
+.studio-mode .arrangement{max-height:none;min-height:430px;grid-template-columns:236px minmax(650px,1fr);width:100%;overflow:visible}
+.studio-mode .top-label,.studio-mode .ruler{height:35px;position:sticky;top:0;z-index:12;background:#1d242e}
+.studio-mode .top-label{position:sticky;left:0;z-index:13;padding-left:18px}
+.studio-mode .track-info{position:sticky;left:0;z-index:10;height:110px;background:#202832;padding:13px 15px}
+.studio-mode .track-selected{background:#263a36}
+.studio-mode .track-title input{font-size:13px}
+.studio-mode .track-settings{margin-top:20px}
+.studio-mode .lane{height:110px;background-color:#171d27;background-image:linear-gradient(to right,#47546352 1px,transparent 1px),linear-gradient(to bottom,#23303b44 1px,transparent 1px)}
+.studio-mode .lane:nth-of-type(2n){background-color:#1a222d}
+.studio-mode .clip{top:9px;bottom:9px;border-radius:5px}
+.studio-mode .clip-caption{background:#10192080;height:26px}
+.studio-mode .wave{height:55px}
+.studio-mode .arrangement-footer{background:#181e26;border-bottom:1px solid #303d45;font-size:10px;min-height:34px;padding:7px 18px}
+.studio-mode .studio-toolbar{margin:0;background:#1a2029;border-bottom:1px solid #323e47;padding:7px 13px;gap:6px}
+.studio-mode .studio-toolbar button{font-size:11px;padding:7px 12px}
+.studio-mode .drawer-panel{margin:0;padding:17px 22px;border:0;border-radius:0;background:#171e27;border-bottom:1px solid #38424d}
+.studio-mode .drawer-title{padding-bottom:9px;margin-bottom:12px}
+.studio-mode .bottom-grid{display:none}
+.studio-mode .bottom-grid.input-visible{display:grid;margin:0;padding:14px 20px;grid-template-columns:1fr 1fr;background:#121922}
+.studio-mode .utility-card{padding:15px}
+.studio-mode .app-footer{margin:0;padding:10px 20px;background:#11161e}
+.studio-mode .mobile-dock{display:none}
+@media(max-width:860px){
+.studio-mode .topbar{display:flex;min-height:54px;height:54px;padding:0 10px}
+.studio-mode .topbar .top-actions{display:none}
+.studio-mode .top-left{width:auto}.studio-mode .project-name{max-width:175px}
+.studio-back{padding:5px 9px}.studio-back span{display:none}
+.studio-heading{padding:9px 12px}
+.studio-heading-kicker{font-size:8px}
+.studio-heading h1{font-size:14px}
+.studio-heading-actions .btn{font-size:11px;padding:7px 9px}
+.studio-mode .control-bar{gap:11px;padding:9px 11px;min-height:75px;justify-content:flex-start}
+.studio-mode .control-bar .transport-divider{display:none}
+.studio-mode .control-bar .transport{gap:8px}
+.studio-mode .round-btn{width:29px;height:29px}
+.studio-mode .play-btn{width:40px;height:40px}
+.studio-mode .record-btn{width:37px;height:37px;min-width:37px}
+.studio-mode .time-display{font-size:21px}
+.studio-mode .time-display span{display:none}
+.studio-mode .tempo-control input{font-size:15px}
+.studio-mode .bars-control select{font-size:11px;padding:5px}
+.studio-mode .metro-toggle{padding:5px 7px}
+.studio-mode .metro-toggle span{display:none}
+.studio-mode .signature{display:none}
+.studio-mode .content{padding:0 0 72px}
+.studio-mode .mobile-dock{display:flex}
+.studio-mode .arrangement{grid-template-columns:166px minmax(550px,1fr);min-height:420px}
+.studio-mode .track-info{padding:10px 8px}
+.studio-mode .track-settings label{display:none}
+.studio-mode .panel-heading{padding:0 9px}
+.studio-mode .panel-heading small{display:none}
+.timeline-tools{gap:3px}.timeline-tools button{padding:5px 6px;font-size:10px}
+.timeline-tools button.track-add{margin-left:2px}
+.studio-mode .studio-toolbar{padding:7px 9px}
+.studio-mode .arrangement-viewport{min-height:360px}
+.studio-mode .bottom-grid.input-visible{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+.studio-heading h1 span{display:none}
+.studio-heading-actions .btn:first-child{display:none}
+.studio-mode .control-bar{gap:8px;flex-wrap:nowrap;overflow-x:auto}
+.studio-mode .tempo-control label,.studio-mode .bars-control label{font-size:8px}
+.studio-mode .panel-heading strong{font-size:12px}
+.studio-mode .panel-heading .panel-icon{display:none}
+.timeline-tools button:first-child{display:none}
+}
