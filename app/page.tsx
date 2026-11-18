@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import DrumMachine from './components/DrumMachine';
 import AudioSetup from './components/AudioSetup';
+import { PcmRecorder } from './audio/pcm-recorder';
 
 type Track = { id: string; name: string; color: string; volume: number; pan: number; muted: boolean; solo: boolean };
 type Clip = { id: string; trackId: string; start: number; name: string; peaks: number[] };
@@ -109,6 +110,7 @@ export default function Studio() {
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
   const clickNodes = useRef<AudioNode[]>([]);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const pcmRecorder = useRef<PcmRecorder | null>(null);
   const inputStream = useRef<MediaStream | null>(null);
   const recordStart = useRef(0);
   const recordingTrack = useRef('');
@@ -248,7 +250,23 @@ export default function Studio() {
     await addAudio(file, t.id, file.name, 0);
   };
 
-  const stopRecording = () => { if (mediaRecorder.current?.state === 'recording') mediaRecorder.current.stop(); };
+  const stopRecording = () => {
+    if (pcmRecorder.current) {
+      const recorder=pcmRecorder.current;
+      pcmRecorder.current=null;
+      void recorder.stop().then(blob=>{
+        inputStream.current?.getTracks().forEach(t=>t.stop());
+        inputStream.current=null;setRecording(false);
+        return addAudio(blob,recordingTrack.current,recordName.current,recordStart.current);
+      }).catch(()=>{
+        inputStream.current?.getTracks().forEach(t=>t.stop());
+        inputStream.current=null;setRecording(false);
+        setStatus('Could not finalize WAV recording');
+      });
+      return;
+    }
+    if (mediaRecorder.current?.state === 'recording') mediaRecorder.current.stop();
+  };
 
   const startRecording = async () => {
     if (recording) { stopRecording(); return; }
@@ -271,6 +289,19 @@ export default function Studio() {
       recordName.current = 'Take ' + new Date().toLocaleTimeString();
       const s = session.current, ctx = ctxRef.current;
       recordStart.current = s && ctx ? ((ctx.currentTime - s.started) % s.length + s.length) % s.length : 0;
+      if (typeof AudioWorkletNode !== 'undefined') {
+        const recorder=new PcmRecorder();
+        try {
+          await recorder.start(stream);
+          pcmRecorder.current=recorder;
+          setRecording(true);
+          setStatus('Recording uncompressed WAV · monitor with Spark GO headphones');
+          return;
+        } catch {
+          await recorder.abort();
+          setStatus('WAV capture unavailable — using browser audio recorder');
+        }
+      }
       const chunks: BlobPart[] = [];
       const rec = new MediaRecorder(stream);
       mediaRecorder.current = rec;
